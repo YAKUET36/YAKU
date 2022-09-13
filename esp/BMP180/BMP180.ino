@@ -16,8 +16,9 @@ void setup()
     Serial.println("Error al iniciar el BMP180");
     while(1);
   }
-}
 
+
+}
 void loop()
 {
   char status;
@@ -48,8 +49,9 @@ void loop()
           Serial.print("Altitud: ");
           Serial.print(A);
           Serial.println(" m");    
+
         }      
-      }      
+      }     
     }   
   } 
   delay(1000);

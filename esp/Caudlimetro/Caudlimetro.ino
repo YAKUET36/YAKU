@@ -1,4 +1,4 @@
-const int sensorPin = 2;
+const int sensorPin = 16;
 const int measureInterval = 2500;
 volatile int pulseConter;
 

@@ -7,6 +7,7 @@
 #include <Adafruit_SSD1306.h>
 #include <DHT.h>
 #include <SFE_BMP180.h>
+#include <Wire.h>
 
 //------------------------------------------- Definicion de algunos valores por defecto -------------------------------------------//
 
@@ -14,7 +15,6 @@
 #define DHTTYPE  DHT22   //Definimos el modelo del sensor DHT22
 #define DHTPIN    23     // Se define el pin D4 del ESP32 para conectar el sensor DHT22
 DHT dht(DHTPIN, DHTTYPE, 23); 
-SFE_BMP180 bmp180;
 
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 const int tiempo_12hs = (60 * 12) * 60000;
@@ -22,6 +22,10 @@ const int tiempo_12hs = (60 * 12) * 60000;
 // Valores del sensor LDR
 const float max_value_ldr = 1023;
 const float min_value_ldr = 0;
+
+//Pressure
+SFE_BMP180 bmp180;
+double PresionNivelMar = 1013.25; //presion sobre el nivel del mar en mbar
 
 // BLE Credentils 
 const char *service_name = "PROV_12345";
@@ -116,12 +120,19 @@ void setup() {
       while (true);
   }
   
-  //BEGIN´s
+    //BEGIN´s
   display.clearDisplay();
   dht.begin();
-  bmp180.begin(); 
-  Serial.begin(115200);
 
+  if (bmp180.begin())
+    Serial.println("BMP180 iniciado");
+  else
+  {
+    Serial.println("Error al iniciar el BMP180");
+    while(1);
+  }
+
+  Serial.begin(115200);
   // Setear gpios
   digitalWrite(gpio_reset, HIGH);
   pinMode(gpio_reset, INPUT);
@@ -147,7 +158,7 @@ void setup() {
   RMaker.enableTZService();
   RMaker.enableSchedule();
 
-  //Serial.printf("\nStarting ESP-RainMaker\n");
+  Serial.printf("\nStarting ESP-RainMaker\n");
   RMaker.start();
 
   //Intervalo de tiempo para enviar los datos del sensor
@@ -167,7 +178,7 @@ void setup() {
 void loop() {
 
   if (Timer.isReady() && wifi_connected) { // Chequea si el contador termino
-    //Serial.println("Sending Sensor's Data");
+    Serial.println("Sending Sensor's Data");
 
     Send_Sensor();
     Regado();
@@ -198,10 +209,9 @@ void loop() {
 }
 
 void Send_Sensor() {
-  //------------------------------------------- Pasa el valor de los dispositivos a porcentaje-------------------------------------------//
   char status;
   double T,P,A;
-  float pressure_value;
+
   status = bmp180.startTemperature(); //Inicio de lectura de temperatura
   if (status != 0){   
     delay(status); //Pausa para que finalice la lectura
@@ -211,35 +221,23 @@ void Send_Sensor() {
       if (status != 0){        
         delay(status); //Pausa para que finalice la lectura        
         status = bmp180.getPressure(P,T); //Obtener la presión
-        if (status != 0){
-          float pressure_value = P;
-        }
-      }
-    }
-  }
-  float ground_value = analogRead(gpio_ground);//map(analogRead(gpio_ground), 339, 600, 0, 10); 
-  float ldr_value =  analogRead(gpio_ldr); //map( , 0, 1023, 0, 100);
-  float humidity_value = dht.readHumidity(); //Se lee la humedad y se asigna el valor a "h"
-  float temp_value = dht.readTemperature(); //Se lee la temperatura y se asigna el valor a "t"
+        if (status != 0){                  
+          Serial.print("Temperatura: ");
+          Serial.print(T);
+          Serial.print("Presion: ");
+          Serial.print(P);
+          A= bmp180.altitude(P,PresionNivelMar); //Calcular altura
+        }      
+      }     
+    }   
+  } 
 
-  //------------ Muestra por pantalla el valor del dispositivo tanto en su valor original ------------//
-  display.setTextSize(1.0);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.clearDisplay();
-
-  display.print("Ground - ");
-  display.println(ground_value);
-  display.print("LDR - ");
-  display.println(ldr_value);
-  display.print("Temperature - ");
-  display.println(temp_value);
-  display.print("Humidity - ");
-  display.println(humidity_value);
-  display.print("Pressure - ");
-  display.println(pressure_value);
-  // Enviar a pantalla
-  display.display();
+  //------------------------------------------- Pasa el valor de los dispositivos a porcentaje-------------------------------------------//
+  float ground_value = map(analogRead(gpio_ground), 339, 600, 0, 100); 
+  float ldr_value = analogRead(gpio_ldr);
+  float humidity_value = dht.readHumidity(); 
+  float temp_value = dht.readTemperature(); 
+  float pressure_value = P;
 
   //------------------------------------------- Envia los valores a la Rainmaker -------------------------------------------//
   ground.updateAndReportParam("Temperature", ground_value);
@@ -248,12 +246,30 @@ void Send_Sensor() {
   temp.updateAndReportParam("Temperature", temp_value);
   pressure.updateAndReportParam("Temperature", pressure_value);  
 
+
+  //------------ Muestra por pantalla el valor del dispositivo tanto en su valor original ------------//
+  display.setTextSize(1.0);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.clearDisplay();
+
+  display.print("Ground:");
+  display.println(ground_value);
+  display.print("LDR:");
+  display.println(ldr_value);
+  display.print("Temperature:");
+  display.println(temp_value);
+  display.print("Humidity:");
+  display.println(humidity_value);
+  display.print("Pressure:");
+  display.println(P);
+  // Enviar a pantalla
+  display.display();
 }
 
 void Regado()
 {
   //------------------------------------------- Este metodo abre la bomba de agua durante 5s cada 12hs -------------------------------------------//
-
  if(Water_bomb_Timer.isReady()){
     if(analogRead(gpio_ldr) > 1000 && analogRead(gpio_ground) < 250){
       delay_5s.setInterval(5000);
