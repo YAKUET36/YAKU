@@ -10,7 +10,6 @@
 #include <Wire.h>
 
 //------------------------------------------- Definicion de algunos valores por defecto -------------------------------------------//
-
 #define DEFAULT_RELAY_MODE true
 #define DHTTYPE  DHT22   //Definimos el modelo del sensor DHT22
 #define DHTPIN    23     // Se define el pin D4 del ESP32 para conectar el sensor DHT22
@@ -48,10 +47,11 @@ SimpleTimer delay_5s;
 
 static TemperatureSensor ground("Tierra");     //Sensor de humedad de tierra
 static TemperatureSensor ldr("LDR");              //Sensor de luminosidad
-static Switch my_switch("Relay", &relay);         //Relay
+static Switch my_switch("Bomba de Agua", &relay);         //Relay
 static TemperatureSensor pressure("Presion");     //Sensor de Presion Atmosferica
 static TemperatureSensor temp("Temperatura");     //Sensor de Temperatura
 static TemperatureSensor humidity("Humedad");    //Sesnor de Humedad ambiente
+static TemperatureSensor altitud("Altitud");    //Sesnor de Humedad ambiente
 
 void sysProvEvent(arduino_event_t *sys_event)
 {
@@ -119,8 +119,7 @@ void setup() {
   #endif
       while (true);
   }
-  
-    //BEGIN´s
+  //BEGIN´s
   display.clearDisplay();
   dht.begin();
 
@@ -151,8 +150,8 @@ void setup() {
   my_node.addDevice(pressure);
   my_node.addDevice(humidity);
   my_node.addDevice(temp);
+  my_node.addDevice(altitud);
   my_node.addDevice(my_switch);
-
 
   //RMaker.enableOTA(OTA_USING_PARAMS); // Es opcional
   RMaker.enableTZService();
@@ -162,7 +161,7 @@ void setup() {
   RMaker.start();
 
   //Intervalo de tiempo para enviar los datos del sensor
-  Timer.setInterval(3000);
+  Timer.setInterval(60000);
   Water_bomb_Timer.setInterval(tiempo_12hs);
 
   WiFi.onEvent(sysProvEvent);
@@ -174,14 +173,12 @@ void setup() {
 #endif
 }
 
-
 void loop() {
-
   if (Timer.isReady() && wifi_connected) { // Chequea si el contador termino
-    Serial.println("Sending Sensor's Data");
-
+    
     Send_Sensor();
     Regado();
+    Serial.println("Sending Sensor's Data");
     Timer.reset(); // Resetar el contador
   };
   // Leer GPIO0 (boton externo para resetear)
@@ -222,10 +219,6 @@ void Send_Sensor() {
         delay(status); //Pausa para que finalice la lectura        
         status = bmp180.getPressure(P,T); //Obtener la presión
         if (status != 0){                  
-          Serial.print("Temperatura: ");
-          Serial.print(T);
-          Serial.print("Presion: ");
-          Serial.print(P);
           A= bmp180.altitude(P,PresionNivelMar); //Calcular altura
         }      
       }     
@@ -238,6 +231,7 @@ void Send_Sensor() {
   float humidity_value = dht.readHumidity(); 
   float temp_value = dht.readTemperature(); 
   float pressure_value = P;
+  float altitude_value = A;
 
   //------------------------------------------- Envia los valores a la Rainmaker -------------------------------------------//
   ground.updateAndReportParam("Temperature", ground_value);
@@ -245,14 +239,17 @@ void Send_Sensor() {
   humidity.updateAndReportParam("Temperature", humidity_value); //No se mapea ya que es un porcentaje
   temp.updateAndReportParam("Temperature", temp_value);
   pressure.updateAndReportParam("Temperature", pressure_value);  
+  altitud.updateAndReportParam("Temperature", altitude_value); 
 
 
   //------------ Muestra por pantalla el valor del dispositivo tanto en su valor original ------------//
-  display.setTextSize(1.0);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.clearDisplay();
-
+  // Dibujar línea horizontal
+  display.drawLine(0, 18, display.width(), 18, SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(20, 0);
+  display.print("YAKU");
+  display.setCursor(0, 19);
+  display.setTextSize(1);
   display.print("Ground:");
   display.println(ground_value);
   display.print("LDR:");
@@ -263,6 +260,9 @@ void Send_Sensor() {
   display.println(humidity_value);
   display.print("Pressure:");
   display.println(P);
+  display.print("Altitude:");
+  display.println(altitude_value);
+
   // Enviar a pantalla
   display.display();
 }
@@ -274,7 +274,7 @@ void Regado()
     if(analogRead(gpio_ldr) > 1000 && analogRead(gpio_ground) < 250){
       delay_5s.setInterval(5000);
       digitalWrite(relay, HIGH); relay_state = true;
-      //Serial.println("REGO");
+      Serial.println("REGO");
       if(delay_5s.isReady()){
         digitalWrite(relay, LOW); relay_state = false;
         delay_5s.reset();
@@ -282,5 +282,4 @@ void Regado()
     }
     Water_bomb_Timer.reset();
   }
-  
 }
