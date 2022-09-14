@@ -1,2 +1,2 @@
-python-bot/account.py
-flask-page/account.py
+web/account.py
+python/account.py
