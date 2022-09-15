@@ -3,8 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" href="{{ url_for('static', filename='images/yakulogo.png') }}">
 
-        <link rel="icon" href="Images/yakulogo.png">
         <!--=============== FAVICON ===============-->
         <link rel="shortcut icon" href="assets/img/favicon.png" type="image/x-icon">
 
@@ -13,7 +13,7 @@
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
         <!--=============== CSS ===============-->
-        <link rel="stylesheet" href="styles.css">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles.css') }}">
 
         <title>YAKU</title>
     </head>
@@ -41,12 +41,11 @@
                         </li>
                     </ul>
 
-
                     <div class="nav__close" id="nav-close">
                         <i class="ri-close-line"></i>
                     </div>
 
-                    <img src="Images/yakulogo.png" alt="nav image" class="nav__img">
+                    <img src="{{url_for('static',filename = 'images/yakulogo.png')}}" alt="nav image" class="nav__img">
                 </div>
 
                 <div class="nav__toggle" id="nav-toggle">
@@ -63,7 +62,6 @@
                 <div class="home__shape-small"></div>          
                 <div class="home__shape-big-1"></div>          
                 <div class="home__shape-big-2"></div>
-                <!---<img src="Images/shape-bg.png" alt="" class="home__shape-bg"> -->         
                 <div class="home__container container">
                     <div class="home__info">
                         <h1 class="home__title">
@@ -80,8 +78,7 @@
                     <div class="home__group">
                         <div class="home__images">
                             <div class="home__img-riego">
-                                <img src="Images/yakulogo.png" alt="home image" class="gsapimage">
-
+                                <img src="{{url_for('static',filename = 'images/yakulogo.png')}}" alt="home image" class="gsapimage">
                             </div>
                         </div>
                     </div> 
@@ -89,20 +86,6 @@
                     
                 </div>
             </section>
-
-            <!---------------CODIGO A CORRER-----------------------------
-            <h3 class="home__description">¡SEGUINOS EN INSTAGRAM CON EL LINK DE ACA ABAJO!</h3>
-            <a href="https://www.instagram.com/yakuet36/" class="home__button">INSTAGRAM</a>
-            <div class="home__footer">
-                        <div>
-                            <h3 class="home__foter-number">Proyecto realizado por alumnos y docentes de la E.T. N°36 D.E. 15 "Almirante Guillero Brown"</h3>
-                        </div>
-
-                    </div>
-            ------------------------------------------------------------->
-
-            
-
 
             <!---------------------------CARILLA DE APP INFO--------------------------------->
 
@@ -131,7 +114,7 @@
                     <div class="home__group">
                         <div class="home__images">
                             <div class="home__img-info">
-                                <img src="Images/appimage.jpg" alt="home image" class="gsapimage_app_2">
+                                <img src="{{url_for('static',filename = 'images/appimage.jpg')}}" alt="home image" class="gsapimage_app_2">
                             </div>
                         </div>
                     </div>
@@ -150,56 +133,56 @@
                 <div class="user-cards">
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/soilmostureicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/soilmostureicon.png')}}" >
                         </div>
                         <h2>Humedad en tierra</h2>
                         <h3 class="home__foter-number">{{ soil_m }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/tempicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/tempicon.png')}}" >
                         </div>
                         <h2>Temperatura de ambiente</h2>
                         <h3 class="home__foter-number">{{ temp }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/humidityicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/humidityicon.png')}}" >
                         </div>
                         <h2>Humedad de ambiente</h2>
                         <h3 class="home__foter-number">{{ hum }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/pressureicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/pressureicon.png')}}" >
                         </div>
                         <h2>Presión atmosférica</h2>
                         <h3 class="home__foter-number">{{ press }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/windicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/windicon.png')}}" >
                         </div>
                         <h2>Velocidad de viento</h2>
                         <h3 class="home__foter-number">{{ wind }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/heighticon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/heighticon.png')}}" >
                         </div>
                         <h2>Altitud</h2>
                         <h3 class="home__foter-number">{{ height }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/lighticon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/lighticon.png')}}" >
                         </div>
                         <h2>Luminosidad</h2>
                         <h3 class="home__foter-number">{{ ldr }}</h3>
                     </div>
                     <div class="card">
                         <div class="profile-img">
-                            <img src="Images/waterpumpicon.png" alt="user">
+                            <img src="{{url_for('static',filename = 'images/waterpumpicon.png')}}" >
                         </div>
                         <h2>Bomba de agua</h2>
                         <h3 class="home__foter-number">{{ relay }}</h3>
@@ -230,7 +213,7 @@
                             <a href="https://www.instagram.com/yakuet36/" target="_blank">
                                 <i class="fab fa-instagram"></i>
                             </a>
-                       </div>>
+                       </div>
                     </div>
                     <div class="button">
                        <div class="icon">
@@ -265,7 +248,7 @@
         <!--=============== APPEARING THINGS ===============-->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.1/gsap.min.js"></script>
         <!--=============== MAIN JS ===============-->
-        <script src="main.js"></script>
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
         
     </body>
 </html>

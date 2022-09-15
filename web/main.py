@@ -23,4 +23,3 @@ def hello_world():
 if __name__ == "__main__":
     print(last_callback)
     app.run()
-    print(last_callback)
