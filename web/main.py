@@ -14,9 +14,11 @@ app = Flask(__name__)
 def hello_world(): 
     global last_callback
 
-    return render_template('home.html', hum=last_callback['Humidity'],
-     ldr=last_callback['LDR'], soil_m=last_callback['Soil Moisture'],
-      temp=last_callback['Temperature'], press=last_callback['Pressure']) #sending the parameters to the page
+    return render_template('home.html', soil_m=last_callback['Soil Moisture'], 
+        ldr=last_callback['LDR'], press=last_callback['Pressure'], 
+        hum=last_callback['Humidity'], temp=last_callback['Temperature'], 
+        height=last_callback['Height'], relay = last_callback['Relay'],
+        wind=last_callback['Wind']) #sending the parameters to the page
 
 if __name__ == "__main__":
     print(last_callback)

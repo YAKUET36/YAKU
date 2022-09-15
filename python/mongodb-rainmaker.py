@@ -29,11 +29,12 @@ def main():
             url="https://api.rainmaker.espressif.com/v1/user/nodes/params?node_id=aYbCT4UQsbwvCEtrWCYrZg", #node id got from the app
              headers=headers).content)) #recopilates the info from the node
     
-    dicc = {'Humidity': node['Humedad']['Temperature'], 'LDR': node['LDR']['Temperature'], 'Pressure' : node['Presion']['Temperature'],
-            'Soil Moisture': node['Tierra']['Temperature'], 'Temperature': node['Temperatura']['Temperature'],
-            'Relay' : node['Relay']['Power'], 'Wind' : str(w.wind()['speed']) + 'm/s','Clouds' : str(w.clouds) + '%',
-            'Time': strftime("%d %b %Y, %H:%M") ,'Timestamp' : ts} #creates the dicc that we are sending to the database
-    
+    dicc = {'Soil Moisture': node['Tierra']['Temperature'], 'LDR': node['LDR']['Temperature'], 
+            'Pressure' : node['Presion']['Temperature'], 'Humidity': node['Humedad']['Temperature'],
+            'Temperature': str(node['Temperatura']['Temperature']) + '°C','Height': str(round(node['Altitud']['Temperature'])) + 'mts',
+            'Relay' : node['Bomba de Agua']['Power'], 'Wind' : str(w.wind()['speed']) + 'm/s','Clouds' : str(w.clouds) + '%',
+            'Time': strftime("%d %b %Y, %H:%M") ,'Timestamp' : ts} #creates the dicc that we are sending to the database}
+
     #to see the different nodes, we could use this nodes_list variable
     #nodes_list = json.loads(requests.get(url='https://api.rainmaker.espressif.com/v1/user/nodes', headers=headers).content)
     
