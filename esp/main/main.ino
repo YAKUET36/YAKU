@@ -18,24 +18,24 @@ DHT dht(DHTPIN, DHTTYPE, 23);
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 const int tiempo_12hs = (60 * 12) * 60000;
 
-// Valores del sensor LDR
-const float max_value_ldr = 1023;
-const float min_value_ldr = 0;
+//Value
+float ground_value;
+float ldr_value;
 
 //Pressure
 SFE_BMP180 bmp180;
-double PresionNivelMar = 1013.25; //presion sobre el nivel del mar en mbar
+double PresionNivelMar = 1013.25;  //presion sobre el nivel del mar en mbar
 
-// BLE Credentils 
+// BLE Credentils
 const char *service_name = "PROV_12345";
 const char *pop = "1234567";
 
 //------------------------------------------- Declaracion de pines -------------------------------------------//
 
-static uint8_t gpio_reset = 0;      //boton de resetear
+static uint8_t gpio_reset = 0;    //boton de resetear
 static uint8_t gpio_ground = 35;  //ADC35 para sensor de humedad suelo
-static uint8_t gpio_ldr = 34;       //ADC34 para sensor de luminosidad
-static uint8_t relay = 2;  // pin que maneja el relay
+static uint8_t gpio_ldr = 34;     //ADC34 para sensor de luminosidad
+static uint8_t relay = 2;         // pin que maneja el relay
 bool relay_state = true;
 bool wifi_connected = 0;
 
@@ -45,16 +45,14 @@ SimpleTimer delay_5s;
 
 //------------------------------------------- Declaracion de dispositivos -------------------------------------------//
 
-static TemperatureSensor ground("Tierra");     //Sensor de humedad de tierra
-static TemperatureSensor ldr("LDR");              //Sensor de luminosidad
-static Switch my_switch("Bomba de Agua", &relay);         //Relay
-static TemperatureSensor pressure("Presion");     //Sensor de Presion Atmosferica
-static TemperatureSensor temp("Temperatura");     //Sensor de Temperatura
-static TemperatureSensor humidity("Humedad");    //Sesnor de Humedad ambiente
-static TemperatureSensor altitud("Altitud");    //Sesnor de Humedad ambiente
+static TemperatureSensor ground("Tierra");         //Sensor de humedad de tierra
+static TemperatureSensor ldr("LDR");               //Sensor de luminosidad
+static Switch my_switch("Bomba de Agua", &relay);  //Relay
+static TemperatureSensor pressure("Presion");      //Sensor de Presion Atmosferica mide en Mili Bar
+static TemperatureSensor temp("Temperatura");      //Sensor de Temperatura
+static TemperatureSensor humidity("Humedad");      //Sesnor de Humedad ambiente
 
-void sysProvEvent(arduino_event_t *sys_event)
-{
+void sysProvEvent(arduino_event_t *sys_event) {
   switch (sys_event->event_id) {
     case ARDUINO_EVENT_PROV_START:
 #if CONFIG_IDF_TARGET_ESP32
@@ -70,12 +68,13 @@ void sysProvEvent(arduino_event_t *sys_event)
       wifi_connected = 1;
       delay(500);
       break;
-    case ARDUINO_EVENT_PROV_CRED_RECV: {
+    case ARDUINO_EVENT_PROV_CRED_RECV:
+      {
         Serial.println("\nReceived Wi-Fi credentials");
         Serial.print("\tSSID : ");
-        Serial.println((const char *) sys_event->event_info.prov_cred_recv.ssid);
+        Serial.println((const char *)sys_event->event_info.prov_cred_recv.ssid);
         Serial.print("\tPassword : ");
-        Serial.println((char const *) sys_event->event_info.prov_cred_recv.password);
+        Serial.println((char const *)sys_event->event_info.prov_cred_recv.password);
         break;
       }
     case ARDUINO_EVENT_PROV_INIT:
@@ -95,7 +94,7 @@ void write_callback(Device *device, Param *param, const param_val_t val, void *p
   Serial.println(device_name);
   const char *param_name = param->getParamName();
 
-  if (strcmp(device_name, "Relay") == 0)   //detectar relay
+  if (strcmp(device_name, "Relay") == 0)  //detectar relay
   {
     if (strcmp(param_name, "Power") == 0)  //detectar si el relay esta prendido
     {
@@ -125,10 +124,9 @@ void setup() {
 
   if (bmp180.begin())
     Serial.println("BMP180 iniciado");
-  else
-  {
+  else {
     Serial.println("Error al iniciar el BMP180");
-    while(1);
+    while (1);
   }
 
   Serial.begin(115200);
@@ -150,7 +148,6 @@ void setup() {
   my_node.addDevice(pressure);
   my_node.addDevice(humidity);
   my_node.addDevice(temp);
-  my_node.addDevice(altitud);
   my_node.addDevice(my_switch);
 
   //RMaker.enableOTA(OTA_USING_PARAMS); // Es opcional
@@ -161,7 +158,7 @@ void setup() {
   RMaker.start();
 
   //Intervalo de tiempo para enviar los datos del sensor
-  Timer.setInterval(60000);
+  Timer.setInterval(3000);
   Water_bomb_Timer.setInterval(tiempo_12hs);
 
   WiFi.onEvent(sysProvEvent);
@@ -174,12 +171,12 @@ void setup() {
 }
 
 void loop() {
-  if (Timer.isReady() && wifi_connected) { // Chequea si el contador termino
-    
+  if (Timer.isReady() && wifi_connected) {  // Chequea si el contador termino
+
     Send_Sensor();
     Regado();
     Serial.println("Sending Sensor's Data");
-    Timer.reset(); // Resetar el contador
+    Timer.reset();  // Resetar el contador
   };
   // Leer GPIO0 (boton externo para resetear)
   if (digitalRead(gpio_reset) == LOW) {  //mantener boton presionado
@@ -207,76 +204,79 @@ void loop() {
 
 void Send_Sensor() {
   char status;
-  double T,P,A;
+  double T, P, A;
 
-  status = bmp180.startTemperature(); //Inicio de lectura de temperatura
-  if (status != 0){   
-    delay(status); //Pausa para que finalice la lectura
-    status = bmp180.getTemperature(T); //Obtener la temperatura
-    if (status != 0){
-      status = bmp180.startPressure(3); //Inicio lectura de presión
-      if (status != 0){        
-        delay(status); //Pausa para que finalice la lectura        
-        status = bmp180.getPressure(P,T); //Obtener la presión
-        if (status != 0){                  
-          A= bmp180.altitude(P,PresionNivelMar); //Calcular altura
-        }      
-      }     
-    }   
-  } 
+  status = bmp180.startTemperature();  //Inicio de lectura de temperatura
+  if (status != 0) {
+    delay(status);                      //Pausa para que finalice la lectura
+    status = bmp180.getTemperature(T);  //Obtener la temperatura
+    if (status != 0) {
+      status = bmp180.startPressure(3);  //Inicio lectura de presión
+      if (status != 0) {
+        delay(status);                      //Pausa para que finalice la lectura
+        status = bmp180.getPressure(P, T);  //Obtener la presión
+        if (status != 0) {
+          A = bmp180.altitude(P, PresionNivelMar);  //Calcular altura
+          Serial.println(A);
+        }
+      }
+    }
+  }
 
   //------------------------------------------- Pasa el valor de los dispositivos a porcentaje-------------------------------------------//
-  float ground_value = map(analogRead(gpio_ground), 339, 600, 0, 100); 
-  float ldr_value = analogRead(gpio_ldr);
-  float humidity_value = dht.readHumidity(); 
-  float temp_value = dht.readTemperature(); 
+  float ground_value =  map(analogRead(gpio_ground),2200 , 3400, 0, 100);
+  if(ground_value > 100) ground_value = 100;
+  float ldr_value = map(analogRead(gpio_ldr),230 ,3950, 0 ,100);
+  float humidity_value = dht.readHumidity();
+  float temp_value = dht.readTemperature();
   float pressure_value = P;
-  float altitude_value = A;
 
   //------------------------------------------- Envia los valores a la Rainmaker -------------------------------------------//
   ground.updateAndReportParam("Temperature", ground_value);
   ldr.updateAndReportParam("Temperature", ldr_value);
-  humidity.updateAndReportParam("Temperature", humidity_value); //No se mapea ya que es un porcentaje
+  humidity.updateAndReportParam("Temperature", humidity_value);  //No se mapea ya que es un porcentaje
   temp.updateAndReportParam("Temperature", temp_value);
-  pressure.updateAndReportParam("Temperature", pressure_value);  
-  altitud.updateAndReportParam("Temperature", altitude_value); 
+  pressure.updateAndReportParam("Temperature", pressure_value);
 
 
   //------------ Muestra por pantalla el valor del dispositivo tanto en su valor original ------------//
   // Dibujar línea horizontal
-  display.drawLine(0, 18, display.width(), 18, SSD1306_WHITE);
-  display.setTextSize(1);
-  display.setCursor(20, 0);
+  display.clearDisplay();
+  display.setCursor(40,0);
+  display.setTextSize(2);
   display.print("YAKU");
-  display.setCursor(0, 19);
+
+  display.drawLine(0, 15, display.width(), 15, SSD1306_WHITE);
+  display.setTextSize(1.0);
+  display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
+  display.setCursor(0, 19);
   display.print("Ground:");
-  display.println(ground_value);
+  display.println(int(ground_value));
   display.print("LDR:");
-  display.println(ldr_value);
+  display.println(int(ldr_value));
   display.print("Temperature:");
   display.println(temp_value);
   display.print("Humidity:");
   display.println(humidity_value);
   display.print("Pressure:");
-  display.println(P);
-  display.print("Altitude:");
-  display.println(altitude_value);
+  display.println(int(P));
 
   // Enviar a pantalla
   display.display();
 }
 
-void Regado()
-{
+void Regado() {
   //------------------------------------------- Este metodo abre la bomba de agua durante 5s cada 12hs -------------------------------------------//
- if(Water_bomb_Timer.isReady()){
-    if(analogRead(gpio_ldr) > 1000 && analogRead(gpio_ground) < 250){
+  if (Water_bomb_Timer.isReady()) {
+    if (ldr_value > 2550 && ground_value < 300) {
       delay_5s.setInterval(5000);
-      digitalWrite(relay, HIGH); relay_state = true;
+      digitalWrite(relay, HIGH);
+      relay_state = true;
       Serial.println("REGO");
-      if(delay_5s.isReady()){
-        digitalWrite(relay, LOW); relay_state = false;
+      if (delay_5s.isReady()) {
+        digitalWrite(relay, LOW);
+        relay_state = false;
         delay_5s.reset();
       }
     }
