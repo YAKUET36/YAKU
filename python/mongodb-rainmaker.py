@@ -30,8 +30,8 @@ def main():
              headers=headers).content)) #recopilates the info from the node
     
     dicc = {'Soil Moisture': node['Tierra']['Temperature'], 'LDR': node['LDR']['Temperature'], 
-            'Pressure' : node['Presion']['Temperature'], 'Humidity': node['Humedad']['Temperature'],
-            'Temperature': str(node['Temperatura']['Temperature']) + '°C','Height': str(round(node['Altitud']['Temperature'])) + 'mts',
+            'Pressure' : round(node['Presion']['Temperature']), 'Humidity': node['Humedad']['Temperature'],
+            'Temperature': str(node['Temperatura']['Temperature']) + '°C', #'Height': str(round(node['Altitud']['Temperature'])) + 'mts',
             'Relay' : node['Bomba de Agua']['Power'], 'Wind' : str(w.wind()['speed']) + 'm/s','Clouds' : str(w.clouds) + '%',
             'Time': strftime("%d %b %Y, %H:%M") ,'Timestamp' : ts} #creates the dicc that we are sending to the database}
 
