@@ -11,9 +11,17 @@
 
 //------------------------------------------- Definicion de algunos valores por defecto -------------------------------------------//
 #define DEFAULT_RELAY_MODE true
-#define DHTTYPE  DHT22   //Definimos el modelo del sensor DHT22
-#define DHTPIN    23     // Se define el pin D4 del ESP32 para conectar el sensor DHT22
-DHT dht(DHTPIN, DHTTYPE, 23); 
+//#define DHTTYPE  DHT22   //Definimos el modelo del sensor DHT22
+//#define DHTPIN    23     // Se define el pin D4 del ESP32 para conectar el sensor DHT22
+
+
+#define DHTPIN 23
+// Dependiendo del tipo de sensor
+#define DHTTYPE DHT11
+ 
+// Inicializamos el sensor DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
 
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 const int tiempo_12hs = (60 * 12) * 60000;
