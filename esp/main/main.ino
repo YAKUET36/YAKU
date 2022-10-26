@@ -11,9 +11,6 @@
 
 //------------------------------------------- Definicion de algunos valores por defecto -------------------------------------------//
 #define DEFAULT_RELAY_MODE true
-//#define DHTTYPE  DHT22   //Definimos el modelo del sensor DHT22
-//#define DHTPIN    23     // Se define el pin D4 del ESP32 para conectar el sensor DHT22
-
 
 #define DHTPIN 23
 // Dependiendo del tipo de sensor
@@ -23,8 +20,8 @@
 DHT dht(DHTPIN, DHTTYPE);
 
 
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
-const int tiempo_12hs = (60 * 12) * 60000;
+Adafruit_SSD1306 display(128, 64, &Wire, -1); // Se establece el tamaño del display
+const int tiempo_12hs = (60 * 12) * 60000; // Es un timer para el riego
 
 //Value
 float ground_value;
@@ -65,7 +62,7 @@ void sysProvEvent(arduino_event_t *sys_event) {
     case ARDUINO_EVENT_PROV_START:
 #if CONFIG_IDF_TARGET_ESP32
       Serial.printf("\nProvisioning Started with name \"%s\" and PoP \"%s\" on BLE\n", service_name, pop);
-      printQR(service_name, pop, "ble");
+      printQR(service_name, pop, "ble"); // Se imprime un link para conectar la placa a WIFI
 #else
       Serial.printf("\nProvisioning Started with name \"%s\" and PoP \"%s\" on SoftAP\n", service_name, pop);
       printQR(service_name, pop, "softap");
@@ -78,6 +75,7 @@ void sysProvEvent(arduino_event_t *sys_event) {
       break;
     case ARDUINO_EVENT_PROV_CRED_RECV:
       {
+        //No hace falta completar los datos de WIFI, de eso se encarga la app de Rainmaker
         Serial.println("\nReceived Wi-Fi credentials");
         Serial.print("\tSSID : ");
         Serial.println((const char *)sys_event->event_info.prov_cred_recv.ssid);
@@ -127,8 +125,8 @@ void setup() {
       while (true);
   }
   //BEGIN´s
-  display.clearDisplay();
-  dht.begin();
+  display.clearDisplay(); // Limpia la Pantalla de textos anteriores
+  dht.begin(); 
 
   if (bmp180.begin())
     Serial.println("BMP180 iniciado");
@@ -146,7 +144,7 @@ void setup() {
 
   //------------------------------------------- Declaracion del nodo y relay -------------------------------------------//
   Node my_node;
-  my_node = RMaker.initNode("YAKU");
+  my_node = RMaker.initNode("YAKU"); // Nombre del Nodo
 
   my_switch.addCb(write_callback);  // Callback del relay
 
@@ -158,7 +156,7 @@ void setup() {
   my_node.addDevice(temp);
   my_node.addDevice(my_switch);
 
-  //RMaker.enableOTA(OTA_USING_PARAMS); // Es opcional
+  //RMaker.enableOTA(OTA_USING_PARAMS); // Es opcional, pero no necesario
   RMaker.enableTZService();
   RMaker.enableSchedule();
 
@@ -187,7 +185,7 @@ void loop() {
     Timer.reset();  // Resetar el contador
   };
   // Leer GPIO0 (boton externo para resetear)
-  if (digitalRead(gpio_reset) == LOW) {  //mantener boton presionado
+  if (digitalRead(gpio_reset) == LOW) {  // Mantener boton presionado
     Serial.printf("Reset Button Pressed!\n");
     // manejo de rebote clave
     delay(100);
@@ -231,8 +229,9 @@ void Send_Sensor() {
     }
   }
 
-  //------------------------------------------- Pasa el valor de los dispositivos a porcentaje-------------------------------------------//
-  float ground_value =  map(analogRead(gpio_ground),2200 , 3400, 0, 100);
+  //------------------------------------------- Pasa el valor de los dispositivos a porcentaje -------------------------------------------//
+  // Estos parametros fueron tomados a prueba
+  float ground_value =  map(analogRead(gpio_ground),2200 , 3700, 0, 100);
   if(ground_value > 100) ground_value = 100;
   float ldr_value = map(analogRead(gpio_ldr),230 ,3950, 0 ,100);
   float humidity_value = dht.readHumidity();
@@ -247,7 +246,7 @@ void Send_Sensor() {
   pressure.updateAndReportParam("Temperature", pressure_value);
 
 
-  //------------ Muestra por pantalla el valor del dispositivo tanto en su valor original ------------//
+  //-------------------------------------- Muestra por pantalla el valor del dispositivo tanto en su valor original -----------------------------//
   // Dibujar línea horizontal
   display.clearDisplay();
   display.setCursor(40,0);
@@ -276,6 +275,7 @@ void Send_Sensor() {
 
 void Regado() {
   //------------------------------------------- Este metodo abre la bomba de agua durante 5s cada 12hs -------------------------------------------//
+  //-------------------------Tomamos como primordial para el riego, los valores de el sensor de humedad en tierra y el de luminosidad------------//
   if (Water_bomb_Timer.isReady()) {
     if (ldr_value > 2550 && ground_value < 300) {
       delay_5s.setInterval(5000);
